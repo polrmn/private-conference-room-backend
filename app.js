@@ -12,6 +12,28 @@ app.use(logger("dev"));
 app.use(cors());
 app.use(express.json());
 
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    res.status(401).json({
+      message: "Email is wrong",
+    });
+    return;
+  }
+  if (user.password !== password) {
+    res.status(401).json({
+      message: "Password is wrong",
+    });
+    return;
+  }
+  if (user.password === password) {
+    res.status(200).json({
+      message: "Welcome",
+    });
+  }
+});
+
 const sendEmails = async () => {
   const emails = await Email.find();
   const transporter = nodemailer.createTransport({
