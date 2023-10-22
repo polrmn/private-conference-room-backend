@@ -34,6 +34,11 @@ app.post("/login", async (req, res) => {
   }
 });
 
+app.use("/wake-up", (_, res) => {
+  console.log("I am not slepping");
+  res.json({ message: "I am not sleeping" });
+});
+
 const sendEmails = async () => {
   const emails = await Email.find();
   const transporter = nodemailer.createTransport({
