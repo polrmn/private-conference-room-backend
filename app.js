@@ -69,7 +69,7 @@ const sendEmails = async () => {
   }
 };
 
-cron.schedule("30 17 22 10 *", () => {
+cron.schedule("30 18 22 10 *", () => {
   console.log("cron date");
   sendEmails();
 });
