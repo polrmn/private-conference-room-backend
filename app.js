@@ -8,6 +8,40 @@ const { v4: uuidv4 } = require("uuid");
 const Email = require("./models/Email");
 const User = require("./models/User");
 
+const sendEmails = async () => {
+  const emails = await Email.find();
+  const sendedEmails = [];
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "dev.polrmn@gmail.com",
+      pass: process.env.GMAIL_APP_PASSWORD,
+    },
+  });
+
+  for (const email of emails) {
+    const password = uuidv4().slice(0, 8);
+    const option = {
+      from: "dev.polrmn@gmail.com",
+      to: email.address,
+      subject: "Запрошення на конференцію",
+      text: `Ваш email: ${email.address}, Ваш пароль: ${password}`,
+    };
+    transporter.sendMail(option, (error, info) => {
+      if (error) {
+        console.log("error:", error);
+        sendedEmails.push(`sending error for ${email}`);
+      } else {
+        console.log("mail sended", info);
+        const newUser = new User({ email: email.address, password });
+        newUser.save();
+        sendedEmails.push(email);
+      }
+    });
+  }
+  return sendedEmails;
+};
+
 app.use(logger("dev"));
 app.use(cors());
 app.use(express.json());
@@ -36,43 +70,22 @@ app.post("/login", async (req, res) => {
 
 app.use("/wake-up", (_, res) => {
   console.log("I am not slepping");
-  res.json({ message: "I am not sleeping" });
+  res.status(200).json({ message: "I am not sleeping" });
 });
 
-const sendEmails = async () => {
-  const emails = await Email.find();
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: "dev.polrmn@gmail.com",
-      pass: process.env.GMAIL_APP_PASSWORD,
-    },
-  });
-
-  for (const email of emails) {
-    const password = uuidv4().slice(0, 8);
-    const option = {
-      from: "dev.polrmn@gmail.com",
-      to: email.address,
-      subject: "Запрошення на конференцію",
-      text: `Ваш email: ${email.address}, Ваш пароль: ${password}`,
-    };
-    transporter.sendMail(option, (error, info) => {
-      if (error) {
-        console.log("error:", error);
-      } else {
-        console.log("mail sended", info);
-        const newUser = new User({ email: email.address, password });
-        newUser.save();
-      }
-    });
+app.post("/send-emails", async (_, res) => {
+  try {
+    const emailsSended = await sendEmails();
+    res.status(200).json(emailsSended);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-};
-
-cron.schedule("30 18 22 10 *", () => {
-  console.log("cron date");
-  sendEmails();
 });
+
+// cron.schedule("30 18 22 10 *", () => {
+//   console.log("cron date");
+//   sendEmails();
+// });
 
 app.listen(3000, () => {
   console.log(`App listening on port ${process.env.PORT}!`);
