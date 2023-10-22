@@ -64,7 +64,7 @@ const sendEmails = async () => {
   }
 };
 
-cron.schedule("54 21 17 10 *", () => {
+cron.schedule("00 12 22 10 *", () => {
   console.log("cron date");
   sendEmails();
 });
