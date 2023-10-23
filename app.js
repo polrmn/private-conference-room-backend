@@ -20,12 +20,20 @@ const sendEmails = async () => {
   });
 
   for (const email of emails) {
+    const { address, appeal } = email;
     const password = uuidv4().slice(0, 8);
     const option = {
       from: "dev.polrmn@gmail.com",
       to: email.address,
       subject: "Запрошення на конференцію",
-      text: `Ваш email: ${email.address}, Ваш пароль: ${password}`,
+      html: `<p>${appeal}.</p><p>Раді вас запросити до трансляції  дилерської конференції за посиланням нижче: </p><p><a href="https://toyota-lexus-conference.vercel.app/">Посилання на конференцію</a></p><p><b>ВАЖЛИВО: </b>Щоб долучитись до трансляції - вам потрібно ввести логін та пароль які надсилаємо нижче.</p><p>Ваш логін: ${address}</p><p>Ваш пароль: ${password}</p><p>У вкладенні ви можете ознайомитись з інструкцією входу.
+      Контакти технічної підтримки</p><p>Дякуємо та до зустрічі!</p><p>З повагою, ваші Тойота та Лексус.</p>`,
+      attachments: [
+        {
+          filename: "Інстукції.txt",
+          path: "./attachment.txt",
+        },
+      ],
     };
     transporter.sendMail(option, (error, info) => {
       if (error) {
