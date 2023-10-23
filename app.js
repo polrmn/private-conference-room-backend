@@ -21,7 +21,7 @@ const sendEmails = async () => {
 
   for (const email of emails) {
     const { address } = email;
-    console.log(email);
+    console.log(email.appeal);
     const password = uuidv4().slice(0, 8);
     const option = {
       from: "dev.polrmn@gmail.com",
