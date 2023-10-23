@@ -20,7 +20,7 @@ const sendEmails = async () => {
   });
 
   for (const email of emails) {
-    const { address, appeal } = email;
+    const { address } = email;
     console.log(email);
     const password = uuidv4().slice(0, 8);
     const option = {
@@ -28,7 +28,7 @@ const sendEmails = async () => {
       to: address,
       subject: "Запрошення на конференцію",
       html: `<p>${
-        appeal ? appeal : "Вітаємо"
+        email.appeal ? email.appeal : "Вітаємо"
       }.</p><p>Раді вас запросити до трансляції  дилерської конференції за посиланням нижче: </p><p><a href="https://toyota-lexus-conference.vercel.app/">Посилання на трансляцію</a></p><p><b>ВАЖЛИВО: </b>Щоб долучитись до трансляції - вам потрібно ввести логін та пароль які надсилаємо нижче.</p><p>Ваш логін: ${address}</p><p>Ваш пароль: ${password}</p><p>У вкладенні ви можете ознайомитись з інструкцією входу.
       Контакти технічної підтримки</p><p>Дякуємо та до зустрічі!</p><p>З повагою, ваші Тойота та Лексус.</p>`,
       attachments: [
