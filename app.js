@@ -26,7 +26,7 @@ const sendEmails = async () => {
       from: "dev.polrmn@gmail.com",
       to: email.address,
       subject: "Запрошення на конференцію",
-      html: `<p>${appeal}.</p><p>Раді вас запросити до трансляції  дилерської конференції за посиланням нижче: </p><p><a href="https://toyota-lexus-conference.vercel.app/">Посилання на конференцію</a></p><p><b>ВАЖЛИВО: </b>Щоб долучитись до трансляції - вам потрібно ввести логін та пароль які надсилаємо нижче.</p><p>Ваш логін: ${address}</p><p>Ваш пароль: ${password}</p><p>У вкладенні ви можете ознайомитись з інструкцією входу.
+      html: `<p>${appeal}.</p><p>Раді вас запросити до трансляції  дилерської конференції за посиланням нижче: </p><p><a href="https://toyota-lexus-conference.vercel.app/">Посилання на трансляцію</a></p><p><b>ВАЖЛИВО: </b>Щоб долучитись до трансляції - вам потрібно ввести логін та пароль які надсилаємо нижче.</p><p>Ваш логін: ${address}</p><p>Ваш пароль: ${password}</p><p>У вкладенні ви можете ознайомитись з інструкцією входу.
       Контакти технічної підтримки</p><p>Дякуємо та до зустрічі!</p><p>З повагою, ваші Тойота та Лексус.</p>`,
       attachments: [
         {
@@ -89,11 +89,6 @@ app.post("/send-emails", async (_, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-// cron.schedule("30 18 22 10 *", () => {
-//   console.log("cron date");
-//   sendEmails();
-// });
 
 app.listen(3000, () => {
   console.log(`App listening on port ${process.env.PORT}!`);
