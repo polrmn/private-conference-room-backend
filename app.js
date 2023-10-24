@@ -54,7 +54,7 @@ const createUsers = async () => {
 
   const option = {
     from: "dev.polrmn@gmail.com",
-    to: "polrmn@gmail.com",
+    to: "Yulaa344@gmail.com",
     subject: "Користувачі на конференцію",
     html: `<p>Привіт.</p><p>В додатку до цього листа прикріпляю всіх користувачів у яких є доступ до конференції</p><p>Гарного дня)</p>`,
     attachments: [
