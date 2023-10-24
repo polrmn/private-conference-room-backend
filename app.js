@@ -1,15 +1,49 @@
 const express = require("express");
 const app = express();
+const path = require("path");
 const nodemailer = require("nodemailer");
 const cors = require("cors");
 const logger = require("morgan");
 const { v4: uuidv4 } = require("uuid");
 const Excel = require("exceljs");
-const Email = require("./models/Email");
 const User = require("./models/User");
 
 const createUsers = async () => {
-  const emails = await Email.find();
+  const workbook = new Excel.Workbook();
+  const filePath = path.join(__dirname, "users.xlsx");
+  await workbook.xlsx.readFile(filePath);
+
+  const worksheet = workbook.eachSheet((worksheet, sheetId) => {
+    console.log(`Sheet ${sheetId} - ${worksheet.name}`);
+    if (sheetId === 5) {
+      worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+        if (rowNumber !== 1) {
+          const email = row.getCell(2).value.trim();
+          const password = uuidv4().slice(0, 8);
+          const newUser = new User({ email, password });
+          newUser.save();
+          row.getCell(3).value = password;
+        } else {
+          row.getCell(3).value = "password";
+        }
+      });
+    } else {
+      worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+        if (rowNumber !== 1) {
+          const email = row.getCell(2).value.trim();
+          const password = uuidv4().slice(0, 8);
+          const newUser = new User({ email, password });
+          newUser.save();
+          row.getCell(4).value = password;
+        } else {
+          row.getCell(4).value = "password";
+        }
+      });
+    }
+  });
+
+  await workbook.xlsx.writeFile("conference_participants.xlsx");
+
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -17,30 +51,6 @@ const createUsers = async () => {
       pass: process.env.GMAIL_APP_PASSWORD,
     },
   });
-  const users = [];
-
-  for (const email of emails) {
-    const { address } = email;
-    const password = uuidv4().slice(0, 8);
-
-    const newUser = new User({ email: address, password });
-    users.push({ email: address, password });
-    newUser.save();
-  }
-  const workbook = new Excel.Workbook();
-  const sheet = workbook.addWorksheet("Users");
-
-  sheet.columns = [
-    { header: "Email", key: "email", width: 30 },
-    { header: "Password", key: "password", width: 20 },
-  ];
-
-  for (const user of users) {
-    sheet.addRow(user);
-  }
-
-  const filePath = "./users.xlsx";
-  await workbook.xlsx.writeFile(filePath);
 
   const option = {
     from: "dev.polrmn@gmail.com",
@@ -49,8 +59,8 @@ const createUsers = async () => {
     html: `<p>Привіт.</p><p>В додатку до цього листа прикріпляю всіх користувачів у яких є доступ до конференції</p><p>Гарного дня)</p>`,
     attachments: [
       {
-        filename: "users.xlsx",
-        path: filePath,
+        filename: "conference_participants.xlsx",
+        path: "./conference_participants.xlsx",
       },
     ],
   };
@@ -96,8 +106,8 @@ app.use("/wake-up", (_, res) => {
 
 app.post("/createUsers", async (_, res) => {
   try {
-    const emailsSended = await createUsers();
-    res.status(200).json(emailsSended);
+    await createUsers();
+    res.status(200).json({ message: "Mail sended" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
