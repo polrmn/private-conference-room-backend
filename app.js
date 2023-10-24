@@ -1,16 +1,15 @@
 const express = require("express");
 const app = express();
 const nodemailer = require("nodemailer");
-const cron = require("node-cron");
 const cors = require("cors");
 const logger = require("morgan");
 const { v4: uuidv4 } = require("uuid");
+const Excel = require("exceljs");
 const Email = require("./models/Email");
 const User = require("./models/User");
 
-const sendEmails = async () => {
+const createUsers = async () => {
   const emails = await Email.find();
-  const sendedEmails = [];
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -18,39 +17,50 @@ const sendEmails = async () => {
       pass: process.env.GMAIL_APP_PASSWORD,
     },
   });
+  const users = [];
 
   for (const email of emails) {
-    const { address, appeal } = email;
-    console.log(address, appeal, email, email.name);
+    const { address } = email;
     const password = uuidv4().slice(0, 8);
-    const option = {
-      from: "dev.polrmn@gmail.com",
-      to: address,
-      subject: "Запрошення на конференцію",
-      html: `<p>${
-        appeal ? appeal : "Вітаємо"
-      }.</p><p>Раді вас запросити до трансляції  дилерської конференції за посиланням нижче: </p><p><a href="https://toyota-lexus-conference.vercel.app/">Посилання на трансляцію</a></p><p><b>ВАЖЛИВО: </b>Щоб долучитись до трансляції - вам потрібно ввести логін та пароль які надсилаємо нижче.</p><p>Ваш логін: ${address}</p><p>Ваш пароль: ${password}</p><p>У вкладенні ви можете ознайомитись з інструкцією входу.
-      Контакти технічної підтримки</p><p>Дякуємо та до зустрічі!</p><p>З повагою, ваші Тойота та Лексус.</p>`,
-      attachments: [
-        {
-          filename: "Інстукції.txt",
-          path: "./attachment.txt",
-        },
-      ],
-    };
-    transporter.sendMail(option, (error, info) => {
-      if (error) {
-        console.log("error:", error);
-        sendedEmails.push(`sending error for ${email}`);
-      } else {
-        console.log("mail sended", info);
-        const newUser = new User({ email: email.address, password });
-        newUser.save();
-        sendedEmails.push(email);
-      }
-    });
+
+    const newUser = new User({ email: address, password });
+    users.push({ email: address, password });
+    newUser.save();
   }
-  return sendedEmails;
+  const workbook = new Excel.Workbook();
+  const sheet = workbook.addWorksheet("Users");
+
+  sheet.columns = [
+    { header: "Email", key: "email", width: 30 },
+    { header: "Password", key: "password", width: 20 },
+  ];
+
+  for (const user of users) {
+    sheet.addRow(user);
+  }
+
+  const filePath = "./users.xlsx";
+  await workbook.xlsx.writeFile(filePath);
+
+  const option = {
+    from: "dev.polrmn@gmail.com",
+    to: "polrmn@gmail.com",
+    subject: "Користувачі на конференцію",
+    html: `<p>Привіт.</p><p>В додатку до цього листа прикріпляю всіх користувачів у яких є доступ до конференції</p><p>Гарного дня)</p>`,
+    attachments: [
+      {
+        filename: "users.xlsx",
+        path: filePath,
+      },
+    ],
+  };
+  transporter.sendMail(option, (error, info) => {
+    if (error) {
+      console.log("error:", error);
+    } else {
+      console.log("mail sended", info);
+    }
+  });
 };
 
 app.use(logger("dev"));
@@ -84,9 +94,9 @@ app.use("/wake-up", (_, res) => {
   res.status(200).json({ message: "I am not sleeping" });
 });
 
-app.post("/send-emails", async (_, res) => {
+app.post("/createUsers", async (_, res) => {
   try {
-    const emailsSended = await sendEmails();
+    const emailsSended = await createUsers();
     res.status(200).json(emailsSended);
   } catch (error) {
     res.status(500).json({ error: error.message });
